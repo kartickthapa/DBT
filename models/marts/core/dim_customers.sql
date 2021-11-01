@@ -3,7 +3,7 @@ with customers as (
     select * from {{ref('stg_customers')}}    
 ),
 orders as (
-    select * from {{ref('stg_orders')}}
+    select * from {{source ('jaffle_shop','orders')}}
 )
 ,
 payments as (
@@ -11,20 +11,20 @@ payments as (
 )
 ,
 customers_orders as (
-select customer_id,
+select user_id,
   min(order_date) as first_order_date,
   max(order_date) as most_recent_order_date,
-  count(order_id) as number_of_orders
+  count(id) as number_of_orders
   from orders
   group by 1
 )
 ,
 
 customer_life_time as (
-  select sum(amount) as amount , customer_id
+  select sum(amount) as amount , id
   from payments
-  left join orders using(order_id)
-  group by customer_id
+  left join orders using(id)
+  group by id
 )
 
 ,
@@ -38,8 +38,8 @@ select
   coalesce(customers_orders.number_of_orders,0) as number_of_orders,
   amount
   from customers
-  left join customers_orders using (customer_id)
-  left join customer_life_time using(customer_id)
+  left join customers_orders using (user_id)
+  left join customer_life_time using(id)
  )
 
  select * from final
